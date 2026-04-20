@@ -54,6 +54,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     _flexibleSpacing = NO;
     _layoutEdgeInsets = UIEdgeInsetsZero;
     _layoutImageSize = CGSizeZero;
+    _imageOffset = UIOffsetZero;
+    _titleOffset = UIOffsetZero;
     _needsRecalculate = YES;
 }
 
@@ -126,14 +128,13 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (void)setLayoutTitleColor:(UIColor *)layoutTitleColor {
     [self setTitleColor:layoutTitleColor forState:UIControlStateNormal];
 }
-- (ZLLayoutButton * _Nonnull (^)(id  _Nonnull))titleColor {
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))titleColor {
     return ^(id color) {
         if ([color isKindOfClass:UIColor.class]) {
             self.layoutTitleColor = color;
-        }else if([color isKindOfClass:NSString.class]) {
+        } else if ([color isKindOfClass:NSString.class]) {
             self.layoutTitleColor = __UIColorFromHexString(color);
         }
-        [UIFont systemFontOfSize:39 weight:UIFontWeightBold];
         return self;
     };
 }
@@ -149,37 +150,37 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (instancetype)verticalLayout {
     self.layoutAxis = ZLLayoutButtonAxisVertical;
     return self;
-}// 便捷方法，设置 layoutAxis = Vertical
+}
 - (instancetype)horizontalLayout {
     self.layoutAxis = ZLLayoutButtonAxisHorizontal;
     return self;
-} // 便捷方法，设置 layoutAxis = Horizontal
+}
 - (void)setLayoutOrder:(ZLLayoutButtonOrder)layoutOrder {
     if (_layoutOrder != layoutOrder) { _layoutOrder = layoutOrder; [self _zl_markDirty]; }
 }
 - (instancetype)imageFirst {
     self.layoutOrder = ZLLayoutButtonOrderImageFirst;
     return self;
-} // 便捷方法，设置 layoutOrder = ImageFirst
+}
 - (instancetype)titleFirst {
     self.layoutOrder = ZLLayoutButtonOrderTitleFirst;
     return self;
-} // 便捷方法，设置 layoutOrder = TitleFirst
+}
 - (void)setLayoutContentAlignment:(ZLLayoutButtonContentAlignment)layoutContentAlignment {
     if (_layoutContentAlignment != layoutContentAlignment) { _layoutContentAlignment = layoutContentAlignment; [self setNeedsLayout]; }
 }
 - (instancetype)alignContentCenter {
     self.layoutContentAlignment = ZLLayoutButtonContentAlignmentCenter;
     return self;
-}// 便捷方法，设置 layoutContentAlignment = Center
+}
 - (instancetype)alignContentStart {
     self.layoutContentAlignment = ZLLayoutButtonContentAlignmentStart;
     return self;
-} // 便捷方法，设置 layoutContentAlignment = Start
+}
 - (instancetype)alignContentEnd {
     self.layoutContentAlignment = ZLLayoutButtonContentAlignmentEnd;
     return self;
-} // 便捷方法，设置 layoutContentAlignment
+}
 - (void)setLayoutSpacing:(CGFloat)layoutSpacing {
     if (_layoutSpacing != layoutSpacing) { _layoutSpacing = layoutSpacing; [self _zl_markDirty]; }
 }
@@ -189,7 +190,6 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
-// layoutSpacing 的别名，便捷设置
 
 - (void)setFlexibleSpacing:(BOOL)flexibleSpacing {
     if (_flexibleSpacing != flexibleSpacing) { _flexibleSpacing = flexibleSpacing; [self _zl_markDirty]; }
@@ -197,14 +197,13 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (instancetype)enableFlexibleSpacing {
     self.flexibleSpacing = YES;
     return self;
-} // 便捷方法，设置 flexibleSpacing = YES
+}
 - (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat, CGFloat, CGFloat))edgeInsets {
     return ^(CGFloat top, CGFloat leading, CGFloat bottom, CGFloat trailing) {
         self.layoutEdgeInsets = UIEdgeInsetsMake(top, leading, bottom, trailing);
         return self;
     };
 }
-// layoutEdgeInsets 的别名，便捷设置
 
 - (void)setLayoutEdgeInsets:(UIEdgeInsets)layoutEdgeInsets {
     _layoutEdgeInsets = layoutEdgeInsets;
@@ -222,19 +221,42 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     };
 }
 
+- (void)setImageOffset:(UIOffset)imageOffset {
+    _imageOffset = imageOffset;
+    [self setNeedsLayout];
+}
+
+- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat))imgOffset {
+    return ^(CGFloat horizontal, CGFloat vertical) {
+        self.imageOffset = UIOffsetMake(horizontal, vertical);
+        return self;
+    };
+}
+
+- (void)setTitleOffset:(UIOffset)titleOffset {
+    _titleOffset = titleOffset;
+    [self setNeedsLayout];
+}
+
+- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat))txtOffset {
+    return ^(CGFloat horizontal, CGFloat vertical) {
+        self.titleOffset = UIOffsetMake(horizontal, vertical);
+        return self;
+    };
+}
+
 - (void)_zl_markDirty {
     _needsRecalculate = YES;
     [self invalidateIntrinsicContentSize];
     [self setNeedsLayout];
 }
 
-#pragma mark - Size Calculation (不访问 self.imageView / self.titleLabel 以避免递归)
+#pragma mark - Size Calculation
 
 - (void)_zl_recalculateIfNeeded {
     if (!_needsRecalculate) return;
     _needsRecalculate = NO;
 
-    // 图片尺寸
     UIImage *img = [self imageForState:self.state] ?: [self imageForState:UIControlStateNormal];
     if (img) {
         if (_layoutImageSize.width > 0 && _layoutImageSize.height > 0) {
@@ -246,7 +268,6 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         _cachedImageSize = CGSizeZero;
     }
 
-    // 文字尺寸 — 用 NSString boundingRect 计算，不触发 titleLabel 布局
     NSString *title = [self titleForState:self.state] ?: [self titleForState:UIControlStateNormal];
     NSAttributedString *attrTitle = [self attributedTitleForState:self.state] ?: [self attributedTitleForState:UIControlStateNormal];
 
@@ -309,7 +330,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     return [self intrinsicContentSize];
 }
 
-#pragma mark - layoutSubviews (唯一布局入口，避免死循环)
+#pragma mark - layoutSubviews
 
 - (void)layoutSubviews {
     [super layoutSubviews];
@@ -329,7 +350,6 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     BOOL hasImg = [self _zl_hasImage];
     BOOL hasTxt = [self _zl_hasTitle];
 
-    // 获取 UIButton 内部的 imageView 和 titleLabel
     UIImageView *imgView = self.imageView;
     UILabel *lblView = self.titleLabel;
 
@@ -339,19 +359,24 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return;
     }
 
-    // 只有一个元素
     if (!hasImg) {
         imgView.frame = CGRectZero;
-        lblView.frame = [self _zl_centeredRect:txtSize inRect:contentRect];
+        CGRect f = [self _zl_centeredRect:txtSize inRect:contentRect];
+        f.origin.x += _titleOffset.horizontal;
+        f.origin.y += _titleOffset.vertical;
+        lblView.frame = f;
         return;
     }
     if (!hasTxt) {
         lblView.frame = CGRectZero;
-        imgView.frame = [self _zl_centeredRect:imgSize inRect:contentRect];
+        CGRect f = [self _zl_centeredRect:imgSize inRect:contentRect];
+        f.origin.x += _imageOffset.horizontal;
+        f.origin.y += _imageOffset.vertical;
+        imgView.frame = f;
         return;
     }
 
-    // 两个元素都有 — 确定排列顺序
+    // 两个元素都有
     UIView *firstView, *secondView;
     CGSize firstSize, secondSize;
 
@@ -367,6 +392,20 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         [self _zl_layoutH_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
     } else {
         [self _zl_layoutV_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
+    }
+
+    // 应用偏移量（纯视觉偏移，不影响 intrinsicContentSize）
+    if (_imageOffset.horizontal != 0 || _imageOffset.vertical != 0) {
+        CGRect f = imgView.frame;
+        f.origin.x += _imageOffset.horizontal;
+        f.origin.y += _imageOffset.vertical;
+        imgView.frame = f;
+    }
+    if (_titleOffset.horizontal != 0 || _titleOffset.vertical != 0) {
+        CGRect f = lblView.frame;
+        f.origin.x += _titleOffset.horizontal;
+        f.origin.y += _titleOffset.vertical;
+        lblView.frame = f;
     }
 }
 

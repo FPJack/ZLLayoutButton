@@ -99,6 +99,14 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 @property (nonatomic, strong, nullable) UIColor *layoutTitleColor;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^titleColor)(id color);// layoutTitleColor 的别名，便捷设置 UIColor 或 UIColorHex
 
+/// 图片偏移量（在布局计算完成后额外偏移），正值向右/下，负值向左/上 ，纯视觉偏移，不影响 intrinsicContentSize
+@property (nonatomic, assign) UIOffset imageOffset;
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^imgOffset)(CGFloat horizontal, CGFloat vertical);
+
+/// 文字偏移量（在布局计算完成后额外偏移），正值向右/下，负值向左/上，纯视觉偏移，不影响 intrinsicContentSize
+@property (nonatomic, assign) UIOffset titleOffset;
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^txtOffset)(CGFloat horizontal, CGFloat vertical);
+
 @end
 
 NS_ASSUME_NONNULL_END

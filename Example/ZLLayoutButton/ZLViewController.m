@@ -46,6 +46,35 @@
         y += btn.bounds.size.height + 45;
     }
     
+    // 1.5 图片偏移 + 文字偏移
+    {
+        ZLLayoutButton *btn = [self makeButtonWithTitle:@"图片下移+文字右移" color:[UIColor systemTealColor]];
+        btn.layoutAxis = ZLLayoutButtonAxisHorizontal;
+        btn.layoutSpacing = 8;
+        btn.imageOffset = UIOffsetMake(0, 4);   // 图片向下偏移4pt
+        btn.titleOffset = UIOffsetMake(6, 0);   // 文字向右偏移6pt
+        btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
+        [btn sizeToFit];
+        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
+        [self.scrollView addSubview:btn];
+        [self addLabel:@"imageOffset=(0,4) titleOffset=(6,0)" atY:y - 18];
+        y += btn.bounds.size.height + 45;
+    }
+    
+    // 1.6 垂直排列 + 偏移（链式写法）
+    {
+        ZLLayoutButton *btn = [self makeButtonWithTitle:@"偏移示例" color:[UIColor systemPinkColor]];
+        btn.layoutAxis = ZLLayoutButtonAxisVertical;
+        btn.layoutSpacing = 6;
+        btn.imgOffset(-3, 0);  // 图片向左偏移3pt
+        btn.txtOffset(0, 2);   // 文字向下偏移2pt
+        btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
+        [btn sizeToFit];
+        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
+        [self.scrollView addSubview:btn];
+        [self addLabel:@"垂直 · imgOffset(-3,0) txtOffset(0,2)" atY:y - 18];
+        y += btn.bounds.size.height + 45;
+    }
     
     // 2. 水平 - 文字在左，图片在右
     {
