@@ -6,6 +6,17 @@
 //
 
 #import "ZLLayoutButton.h"
+#define kRGBHexColor(hex) [UIColor colorWithRed:((CGFloat)((hex >> 16) & 0xFF)/255.0) green:((CGFloat)((hex >> 8) & 0xFF)/255.0) blue:((CGFloat)(hex & 0xFF)/255.0) alpha:1.0]
+#define kRGBAHexColor(hex) [UIColor colorWithRed:((CGFloat)((hex >> 16) & 0xFF)/255.0) green:((CGFloat)((hex >> 8) & 0xFF)/255.0) blue:((CGFloat)(hex & 0xFF)/255.0) alpha:1.0]
+static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
+    hexStr = [hexStr stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if([hexStr hasPrefix:@"0x"])hexStr = [hexStr substringFromIndex:2];
+    if([hexStr hasPrefix:@"#"])hexStr = [hexStr substringFromIndex:1];
+    unsigned int hexInt = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexStr];
+    [scanner scanHexInt:&hexInt];
+    return hexStr.length > 6 ? kRGBAHexColor(hexInt) : kRGBHexColor(hexInt);
+}
 
 @interface ZLLayoutButton ()
 /// 缓存的内容尺寸，避免重复计算
@@ -17,7 +28,12 @@
 @implementation ZLLayoutButton
 
 #pragma mark - Init
-
++ (instancetype)verticalLayout {
+    return [self buttonWithType:UIButtonTypeCustom].verticalLayout;
+}
++ (instancetype)horizontalLayout {
+    return [self buttonWithType:UIButtonTypeCustom].horizontalLayout;
+}
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) [self _zl_setupDefaults];
@@ -47,7 +63,16 @@
     [self setImage:layoutImage forState:UIControlStateNormal];
     [self _zl_markDirty];
 }
-
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))image {
+    return ^(id img) {
+        if ([img isKindOfClass:UIImage.class]) {
+            self.layoutImage = img;
+        } else if ([img isKindOfClass:NSString.class]) {
+            self.layoutImage = [UIImage imageNamed:img];
+        }
+        return self;
+    };
+}
 - (UIImage *)layoutImage {
     return [self imageForState:UIControlStateNormal];
 }
@@ -60,12 +85,40 @@
 - (NSString *)layoutTitle {
     return [self titleForState:UIControlStateNormal];
 }
-
+- (ZLLayoutButton * _Nonnull (^)(NSString * _Nonnull))title {
+    return ^(NSString *title) {
+        self.layoutTitle = title;
+        return self;
+    };
+}
 - (void)setLayoutTitleFont:(UIFont *)layoutTitleFont {
     self.titleLabel.font = layoutTitleFont;
     [self _zl_markDirty];
 }
-
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))titleSysFont {
+    return ^(CGFloat size) {
+        self.layoutTitleFont = [UIFont systemFontOfSize:size];
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))titleMedFont {
+    return ^(CGFloat size) {
+        self.layoutTitleFont = [UIFont systemFontOfSize:size weight:UIFontWeightMedium];
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))titleSemFont {
+    return ^(CGFloat size) {
+        self.layoutTitleFont = [UIFont systemFontOfSize:size weight:UIFontWeightSemibold];
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))titleBoldFont {
+    return ^(CGFloat size) {
+        self.layoutTitleFont = [UIFont systemFontOfSize:size weight:UIFontWeightBold];
+        return self;
+    };
+}
 - (UIFont *)layoutTitleFont {
     return self.titleLabel.font;
 }
@@ -73,7 +126,17 @@
 - (void)setLayoutTitleColor:(UIColor *)layoutTitleColor {
     [self setTitleColor:layoutTitleColor forState:UIControlStateNormal];
 }
-
+- (ZLLayoutButton * _Nonnull (^)(id  _Nonnull))titleColor {
+    return ^(id color) {
+        if ([color isKindOfClass:UIColor.class]) {
+            self.layoutTitleColor = color;
+        }else if([color isKindOfClass:NSString.class]) {
+            self.layoutTitleColor = __UIColorFromHexString(color);
+        }
+        [UIFont systemFontOfSize:39 weight:UIFontWeightBold];
+        return self;
+    };
+}
 - (UIColor *)layoutTitleColor {
     return [self titleColorForState:UIControlStateNormal];
 }
@@ -83,22 +146,65 @@
 - (void)setLayoutAxis:(ZLLayoutButtonAxis)layoutAxis {
     if (_layoutAxis != layoutAxis) { _layoutAxis = layoutAxis; [self _zl_markDirty]; }
 }
-
+- (instancetype)verticalLayout {
+    self.layoutAxis = ZLLayoutButtonAxisVertical;
+    return self;
+}// 便捷方法，设置 layoutAxis = Vertical
+- (instancetype)horizontalLayout {
+    self.layoutAxis = ZLLayoutButtonAxisHorizontal;
+    return self;
+} // 便捷方法，设置 layoutAxis = Horizontal
 - (void)setLayoutOrder:(ZLLayoutButtonOrder)layoutOrder {
     if (_layoutOrder != layoutOrder) { _layoutOrder = layoutOrder; [self _zl_markDirty]; }
 }
-
+- (instancetype)imageFirst {
+    self.layoutOrder = ZLLayoutButtonOrderImageFirst;
+    return self;
+} // 便捷方法，设置 layoutOrder = ImageFirst
+- (instancetype)titleFirst {
+    self.layoutOrder = ZLLayoutButtonOrderTitleFirst;
+    return self;
+} // 便捷方法，设置 layoutOrder = TitleFirst
 - (void)setLayoutContentAlignment:(ZLLayoutButtonContentAlignment)layoutContentAlignment {
     if (_layoutContentAlignment != layoutContentAlignment) { _layoutContentAlignment = layoutContentAlignment; [self setNeedsLayout]; }
 }
-
+- (instancetype)alignContentCenter {
+    self.layoutContentAlignment = ZLLayoutButtonContentAlignmentCenter;
+    return self;
+}// 便捷方法，设置 layoutContentAlignment = Center
+- (instancetype)alignContentStart {
+    self.layoutContentAlignment = ZLLayoutButtonContentAlignmentStart;
+    return self;
+} // 便捷方法，设置 layoutContentAlignment = Start
+- (instancetype)alignContentEnd {
+    self.layoutContentAlignment = ZLLayoutButtonContentAlignmentEnd;
+    return self;
+} // 便捷方法，设置 layoutContentAlignment
 - (void)setLayoutSpacing:(CGFloat)layoutSpacing {
     if (_layoutSpacing != layoutSpacing) { _layoutSpacing = layoutSpacing; [self _zl_markDirty]; }
 }
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))spacing {
+    return ^(CGFloat spacing) {
+        self.layoutSpacing = spacing;
+        return self;
+    };
+}
+// layoutSpacing 的别名，便捷设置
 
 - (void)setFlexibleSpacing:(BOOL)flexibleSpacing {
     if (_flexibleSpacing != flexibleSpacing) { _flexibleSpacing = flexibleSpacing; [self _zl_markDirty]; }
 }
+- (instancetype)enableFlexibleSpacing {
+    self.flexibleSpacing = YES;
+    return self;
+} // 便捷方法，设置 flexibleSpacing = YES
+- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat, CGFloat, CGFloat))edgeInsets {
+    return ^(CGFloat top, CGFloat leading, CGFloat bottom, CGFloat trailing) {
+        self.layoutEdgeInsets = UIEdgeInsetsMake(top, leading, bottom, trailing);
+        return self;
+    };
+}
+// layoutEdgeInsets 的别名，便捷设置
 
 - (void)setLayoutEdgeInsets:(UIEdgeInsets)layoutEdgeInsets {
     _layoutEdgeInsets = layoutEdgeInsets;
@@ -108,6 +214,12 @@
 - (void)setLayoutImageSize:(CGSize)layoutImageSize {
     _layoutImageSize = layoutImageSize;
     [self _zl_markDirty];
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat))imageSize {
+    return ^(CGFloat width, CGFloat height) {
+        self.layoutImageSize = CGSizeMake(width, height);
+        return self;
+    };
 }
 
 - (void)_zl_markDirty {

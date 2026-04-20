@@ -44,40 +44,60 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
  *       或使用便捷属性 layoutImage / layoutTitle。
  */
 @interface ZLLayoutButton : UIButton
-
++ (instancetype)verticalLayout; // 便捷方法，设置 layoutAxis = Vertical
++ (instancetype)horizontalLayout; // 便捷方法，设置 layoutAxis = Horizontal
 /// 排列方向，默认 Horizontal
 @property (nonatomic, assign) ZLLayoutButtonAxis layoutAxis;
+- (instancetype)verticalLayout; // 便捷方法，设置 layoutAxis = Vertical
+- (instancetype)horizontalLayout; // 便捷方法，设置 layoutAxis = Horizontal
 
 /// 图文顺序，默认 ImageFirst
 @property (nonatomic, assign) ZLLayoutButtonOrder layoutOrder;
+- (instancetype)imageFirst; // 便捷方法，设置 layoutOrder = ImageFirst
+- (instancetype)titleFirst; // 便捷方法，设置 layoutOrder = TitleFirst
 
 /// 内容对齐方式（在交叉轴上），默认 Center
 @property (nonatomic, assign) ZLLayoutButtonContentAlignment layoutContentAlignment;
+- (instancetype)alignContentCenter; // 便捷方法，设置 layoutContentAlignment = Center
+- (instancetype)alignContentStart; // 便捷方法，设置 layoutContentAlignment = Start
+- (instancetype)alignContentEnd; // 便捷方法，设置 layoutContentAlignment
 
 /// 图文间距，默认 4
 @property (nonatomic, assign) CGFloat layoutSpacing;
 
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^spacing)(CGFloat spacing);// layoutSpacing 的别名，便捷设置
+
 /// 是否启用弹性间距（图文之间弹性撑满），默认 NO
 /// 启用后 layoutSpacing 作为最小间距
 @property (nonatomic, assign) BOOL flexibleSpacing;
+- (instancetype)enableFlexibleSpacing; // 便捷方法，设置 flexibleSpacing = YES
 
 /// 内边距，默认 UIEdgeInsetsZero
 @property (nonatomic, assign) UIEdgeInsets layoutEdgeInsets;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^edgeInsets)(CGFloat top,CGFloat leading,CGFloat bottom,CGFloat trailing);// layoutEdgeInsets 的别名，便捷设置
 
 /// 图片固定大小，默认 CGSizeZero 表示使用图片自身大小
 @property (nonatomic, assign) CGSize layoutImageSize;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^imageSize)(CGFloat width,CGFloat height);// layoutImageSize 的别名，便捷设置
 
 /// 便捷设置图片（设置 Normal 状态）
 @property (nonatomic, strong, nullable) UIImage *layoutImage;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^image)(id image);// layoutImage 的别名，便捷设置 UIImage 或 UIImageName
 
 /// 便捷设置标题（设置 Normal 状态）
 @property (nonatomic, copy, nullable) NSString *layoutTitle;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^title)(NSString *title);// layoutTitle 的别名，便捷设置
 
 /// 便捷设置字体
 @property (nonatomic, strong, nullable) UIFont *layoutTitleFont;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^titleSysFont)(CGFloat fontSize);// layoutTitleFont 的别名，便捷设置
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^titleMedFont)(CGFloat fontSize);// layoutTitleFont 的别名，便捷设置
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^titleSemFont)(CGFloat fontSize);// layoutTitleFont 的别名，便捷设置
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^titleBoldFont)(CGFloat fontSize);// layoutTitleFont 的别名，便捷设置
 
 /// 便捷设置字体颜色（设置 Normal 状态）
 @property (nonatomic, strong, nullable) UIColor *layoutTitleColor;
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^titleColor)(id color);// layoutTitleColor 的别名，便捷设置 UIColor 或 UIColorHex
 
 @end
 
