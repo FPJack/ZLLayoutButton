@@ -26,6 +26,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 @property (nonatomic, assign) BOOL needsRecalculate;
 @property (nonatomic,weak)UILabel *lab;
 @property (nonatomic,weak)UIImageView *imgView;
+@property (nonatomic,copy)NSNumber* isCircleClip;
 @end
 
 @implementation ZLLayoutButton
@@ -170,8 +171,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
-- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))selectTitle {
-    return ^(id title) {
+- (ZLLayoutButton * _Nonnull (^)(NSString* _Nonnull))selectTitle {
+    return ^(NSString* title) {
         if ([title isKindOfClass:NSString.class]) {
             [self setTitle:title forState:UIControlStateSelected];
         } else {
@@ -218,26 +219,44 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 }
 - (ZLLayoutButton * _Nonnull (^)(id _Nonnull))titleColor {
     return ^(id color) {
-        if ([color isKindOfClass:UIColor.class]) {
-            self.layoutTitleColor = color;
-        } else if ([color isKindOfClass:NSString.class]) {
-            self.layoutTitleColor = __UIColorFromHexString(color);
-        }else {
-            self.layoutTitleColor = nil;
-        }
+        self.layoutTitleColor = [self colorWithObj:color];
+        return self;
+    };
+}
+- (UIColor *)colorWithObj:(id)obj {
+    UIColor *c;
+    if ([obj isKindOfClass:UIColor.class]) {
+        c = obj;
+    } else if ([obj isKindOfClass:NSString.class]) {
+        c = __UIColorFromHexString(obj);
+    }
+    return c;
+}
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))selectTitleColor {
+    return ^(id color) {
+        UIColor *c = [self colorWithObj:color];
+        [self setTitleColor:c forState:UIControlStateSelected];
         return self;
     };
 }
 
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))titleMaxWidth {
+    return ^(CGFloat maxWidth) {
+        self.titleLabel.preferredMaxLayoutWidth = maxWidth;
+        [self _zl_markDirty];
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(NSInteger))titleLines {
+    return ^(NSInteger lines) {
+        self.titleLabel.numberOfLines = lines;
+        [self _zl_markDirty];
+        return self;
+    };
+}
 - (ZLLayoutButton * _Nonnull (^)(id _Nonnull))bgColor {
     return ^(id color) {
-        if ([color isKindOfClass:UIColor.class]) {
-            self.backgroundColor = color;
-        } else if ([color isKindOfClass:NSString.class]) {
-            self.backgroundColor = __UIColorFromHexString(color);
-        }else {
-            self.backgroundColor = nil;
-        }
+        self.backgroundColor = [self colorWithObj:color];
         return self;
     };
 }
@@ -389,16 +408,24 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
     NSString *title = [self titleForState:self.state] ?: [self titleForState:UIControlStateNormal];
     NSAttributedString *attrTitle = [self attributedTitleForState:self.state] ?: [self attributedTitleForState:UIControlStateNormal];
-
+    CGFloat maxWidth = CGFLOAT_MAX;
+    if (self.titleLabel.preferredMaxLayoutWidth > 0) {
+        maxWidth = self.titleLabel.preferredMaxLayoutWidth;
+    } else if (self.titleLabel.numberOfLines == 1) {
+        maxWidth = CGFLOAT_MAX;
+    }
+//    else {
+//        maxWidth = self.bounds.size.width - _layoutEdgeInsets.left - _layoutEdgeInsets.right;
+//    }
     if (attrTitle.length > 0) {
-        CGRect r = [attrTitle boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)
+        CGRect r = [attrTitle boundingRectWithSize:CGSizeMake(maxWidth, CGFLOAT_MAX)
                                            options:NSStringDrawingUsesLineFragmentOrigin
                                            context:nil];
         _cachedTitleSize = CGSizeMake(ceil(r.size.width), ceil(r.size.height));
     } else if (title.length > 0) {
         UIFont *font = self.titleLabel.font ?: [UIFont systemFontOfSize:15];
         NSDictionary *attrs = @{NSFontAttributeName: font};
-        CGRect r = [title boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)
+        CGRect r = [title boundingRectWithSize:CGSizeMake(maxWidth, CGFLOAT_MAX)
                                        options:NSStringDrawingUsesLineFragmentOrigin
                                     attributes:attrs
                                        context:nil];
@@ -454,7 +481,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-
+    if (self.isCircleClip) self.circleClip(self.isCircleClip);
     // 始终重新计算，确保动态修改内容后布局正确
     [self _zl_doRecalculate];
 
@@ -478,6 +505,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     if (!hasImg && !hasTxt) {
         imgView.frame = CGRectZero;
         lblView.frame = CGRectZero;
+        [self callLayoutSubviewBlock];
         return;
     }
 
@@ -487,6 +515,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         f.origin.x += [self _zl_flipH:_titleOffset.horizontal];
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
+        [self callLayoutSubviewBlock];
         return;
     }
     if (!hasTxt) {
@@ -495,6 +524,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         f.origin.x += [self _zl_flipH:_imageOffset.horizontal];
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
+        [self callLayoutSubviewBlock];
         return;
     }
 
@@ -534,8 +564,13 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
     }
+    [self callLayoutSubviewBlock];
 }
-
+- (void)callLayoutSubviewBlock {
+    if (self.layoutBlock) {
+        self.layoutBlock(self);
+    }
+}
 // Remove the old adjustImageOffset / adjustTitleOffset methods — inlined above
 
 #pragma mark - Horizontal Layout
@@ -608,6 +643,18 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
+- (ZLLayoutButton * _Nonnull (^)(BOOL))visibility {
+    return ^(BOOL visible) {
+        self.hidden = !visible;
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))alphaValue {
+    return ^(CGFloat alpha) {
+        self.alpha = alpha;
+        return self;
+    };
+}
 - (instancetype)imageModeScaleAspectFit {
     self.imageView.contentMode = UIViewContentModeScaleAspectFit;
     return self;
@@ -631,17 +678,23 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
-
+- (ZLLayoutButton * _Nonnull (^)(BOOL))circleClip {
+    return ^ZLLayoutButton*(BOOL clip) {
+        self.isCircleClip = @(clip);
+        if (clip) {
+            CGFloat minSide = MIN(self.bounds.size.width, self.bounds.size.height);
+            self.layer.cornerRadius = minSide / 2.0;
+            self.layer.masksToBounds = YES;
+        } else {
+            self.layer.cornerRadius = 0;
+            self.layer.masksToBounds = NO;
+        }
+        return self;
+    };
+}
 - (ZLLayoutButton* (^)(id ))borderColor {
     return  ^ZLLayoutButton*(id color){
-        if ([color isKindOfClass:UIColor.class]) {
-            UIColor *c = color;
-            self.layer.borderColor = c.CGColor;
-        }else if ([color isKindOfClass:NSString.class]) {
-            self.layer.borderColor = __UIColorFromHexString(color).CGColor;
-        }else {
-            self.layer.borderColor = nil;
-        }
+        self.layer.borderColor = [self colorWithObj:color].CGColor;
         return self;
     };
 }
@@ -654,14 +707,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
 - (ZLLayoutButton*  _Nonnull (^)(id _Nonnull))shadowColor {
     return ^ZLLayoutButton* (id color) {
-        if ([color isKindOfClass:UIColor.class]) {
-            UIColor *c = color;
-            self.layer.shadowColor = c.CGColor;
-        }else if ([color isKindOfClass:NSString.class]) {
-            self.layer.shadowColor = __UIColorFromHexString(color).CGColor;
-        }else {
-            self.layer.shadowColor = nil;
-        }
+        self.layer.shadowColor = [self colorWithObj:color].CGColor;
         return self.shadowOffset(0,2);
     };
 }
@@ -693,5 +739,11 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         self.layer.masksToBounds = masks;
         return self;
     };
+}
+- (void)dealloc
+{
+    if (self.deallocBlock) {
+        self.deallocBlock();
+    }
 }
 @end

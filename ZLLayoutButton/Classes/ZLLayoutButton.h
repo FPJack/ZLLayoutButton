@@ -104,6 +104,12 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 /// 便捷设置字体颜色（设置 Normal 状态）
 @property (nonatomic, strong, nullable) UIColor *layoutTitleColor;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^titleColor)(id color);// layoutTitleColor 的别名，便捷设置 UIColor 或 UIColorHex
+///设置选中文字颜色
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^selectTitleColor)(id color);
+///设置文字换行最大宽度
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^titleMaxWidth)(CGFloat maxWidth);
+///设置几行 文字，超过则换行，配合 titleMaxWidth 使用
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^titleLines)(NSInteger lines);
 ///设置背景色
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^bgColor)(id color);// 便捷设置背景色，支持 UIColor 或 UIColorHex
 
@@ -123,13 +129,18 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 ///UIViewContentModeScaleAspectFit
 - (instancetype)imageModeScaleAspectFit;
 
+///设置是否可见
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^visibility)(BOOL visible);
+///设置透明度
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^alphaValue)(CGFloat alpha);
 ///设置userinteractionEnabled
 @property (nonatomic, copy, readonly) ZLLayoutButton* (^userInteraction)(BOOL userInteraction);
 ///设置选中
 @property (nonatomic, copy, readonly) ZLLayoutButton* (^select)(BOOL select);
 ///设置圆角
 @property (nonatomic, copy, readonly) ZLLayoutButton* (^cornerRadius)(CGFloat radius);
-
+///设置是否圆形裁剪
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^circleClip)(BOOL circleClip);
 ///UIColor or #333333
 @property (nonatomic,readonly) ZLLayoutButton* (^borderColor)(id);
 @property (nonatomic,readonly) ZLLayoutButton* (^borderWidth)(CGFloat);
@@ -141,6 +152,11 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 //默认6
 @property (nonatomic,readonly) ZLLayoutButton* (^shadowRadius)(CGFloat radius);
 @property (nonatomic,readonly) ZLLayoutButton* (^masksToBounds)(BOOL masksToBounds);
+
+///layoutsubview 回调
+@property (nonatomic, copy) void (^layoutBlock)(ZLLayoutButton * button);
+///dealloc回调
+@property (nonatomic, copy) void (^deallocBlock)(ZLLayoutButton * button);
 @end
 
 NS_ASSUME_NONNULL_END

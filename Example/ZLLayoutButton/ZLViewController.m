@@ -60,6 +60,8 @@
         btn.layoutSpacing = 8;
         [self addButton:btn label:@"水平 · 图片在左"];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            btn.titleLabel.preferredMaxLayoutWidth = 100;
+            btn.titleLabel.numberOfLines = 0;
             [btn setTitle:@"addButtonaddButtonaddButton" forState:UIControlStateNormal];
         });
     }
