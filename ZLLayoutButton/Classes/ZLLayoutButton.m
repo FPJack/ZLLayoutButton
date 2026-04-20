@@ -6,6 +6,7 @@
 //
 
 #import "ZLLayoutButton.h"
+#import <objc/runtime.h>
 #define kRGBHexColor(hex) [UIColor colorWithRed:((CGFloat)((hex >> 16) & 0xFF)/255.0) green:((CGFloat)((hex >> 8) & 0xFF)/255.0) blue:((CGFloat)(hex & 0xFF)/255.0) alpha:1.0]
 #define kRGBAHexColor(hex) [UIColor colorWithRed:((CGFloat)((hex >> 16) & 0xFF)/255.0) green:((CGFloat)((hex >> 8) & 0xFF)/255.0) blue:((CGFloat)(hex & 0xFF)/255.0) alpha:1.0]
 static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
@@ -102,6 +103,19 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))selectImage {
+    return ^(id img) {
+        if ([img isKindOfClass:UIImage.class]) {
+            [self setImage:img forState:UIControlStateSelected];
+        } else if ([img isKindOfClass:NSString.class]) {
+            [self setImage:[UIImage imageNamed:img] forState:UIControlStateSelected];
+        }else {
+            [self setImage:nil forState:UIControlStateSelected];
+        }
+        [self _zl_markDirty];
+        return self;
+    };
+}
 - (UIImage *)layoutImage {
     return [self imageForState:UIControlStateNormal];
 }
@@ -117,6 +131,17 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (ZLLayoutButton * _Nonnull (^)(NSString * _Nonnull))title {
     return ^(NSString *title) {
         self.layoutTitle = title;
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))selectTitle {
+    return ^(id title) {
+        if ([title isKindOfClass:NSString.class]) {
+            [self setTitle:title forState:UIControlStateSelected];
+        } else {
+            [self setTitle:nil forState:UIControlStateSelected];
+        }
+        [self _zl_markDirty];
         return self;
     };
 }
@@ -161,6 +186,21 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
             self.layoutTitleColor = color;
         } else if ([color isKindOfClass:NSString.class]) {
             self.layoutTitleColor = __UIColorFromHexString(color);
+        }else {
+            self.layoutTitleColor = nil;
+        }
+        return self;
+    };
+}
+
+- (ZLLayoutButton * _Nonnull (^)(id _Nonnull))bgColor {
+    return ^(id color) {
+        if ([color isKindOfClass:UIColor.class]) {
+            self.backgroundColor = color;
+        } else if ([color isKindOfClass:NSString.class]) {
+            self.backgroundColor = __UIColorFromHexString(color);
+        }else {
+            self.backgroundColor = nil;
         }
         return self;
     };
@@ -225,7 +265,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     self.flexibleSpacing = YES;
     return self;
 }
-- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat, CGFloat, CGFloat))edgeInsets {
+- (ZLLayoutButton * _Nonnull (^)(CGFloat, CGFloat, CGFloat, CGFloat))insets {
     return ^(CGFloat top, CGFloat leading, CGFloat bottom, CGFloat trailing) {
         self.layoutEdgeInsets = UIEdgeInsetsMake(top, leading, bottom, trailing);
         return self;
@@ -273,7 +313,17 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         return self;
     };
 }
-
+- (ZLLayoutButton * _Nonnull (^)(void (^ _Nonnull)(ZLLayoutButton *)))touchAction {
+    return ^(void (^action)(ZLLayoutButton *)) {
+        [self addTarget:self action:@selector(_zl_handleTouch) forControlEvents:UIControlEventTouchUpInside];
+        objc_setAssociatedObject(self, @selector(_zl_handleTouch), action, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        return self;
+    };
+}
+- (void)_zl_handleTouch {
+    void (^action)(ZLLayoutButton *) = objc_getAssociatedObject(self, _cmd);
+    if (action) action(self);
+}
 - (void)_zl_markDirty {
     _needsRecalculate = YES;
     [self invalidateIntrinsicContentSize];
@@ -523,4 +573,98 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
                       size.width, size.height);
 }
 
+
+- (ZLLayoutButton * _Nonnull (^)(UIViewContentMode))imageMode {
+    return ^(UIViewContentMode mode) {
+        self.imageView.contentMode = mode;
+        return self;
+    };
+}
+- (instancetype)imageModeScaleAspectFit {
+    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    return self;
+}
+- (ZLLayoutButton * _Nonnull (^)(BOOL))userInteraction {
+    return ^(BOOL enabled) {
+        self.userInteractionEnabled = enabled;
+        
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(BOOL))select {
+    return ^(BOOL selected) {
+        self.selected = selected;
+        return self;
+    };
+}
+- (ZLLayoutButton * _Nonnull (^)(CGFloat))cornerRadius {
+    return ^ZLLayoutButton*(CGFloat radius){
+        self.layer.cornerRadius = radius;
+        self.layer.masksToBounds = radius > 0;
+        return self;
+    };
+}
+
+- (ZLLayoutButton* (^)(id ))borderColor {
+    return  ^ZLLayoutButton*(id color){
+        if ([color isKindOfClass:UIColor.class]) {
+            UIColor *c = color;
+            self.layer.borderColor = c.CGColor;
+        }else if ([color isKindOfClass:NSString.class]) {
+            self.layer.borderColor = __UIColorFromHexString(color).CGColor;
+        }else {
+            self.layer.borderColor = nil;
+        }
+        return self;
+    };
+}
+- (ZLLayoutButton* (^)(CGFloat ))borderWidth {
+    return  ^ZLLayoutButton*(CGFloat width){
+        self.layer.borderWidth = width;
+        return self;
+    };
+}
+
+- (ZLLayoutButton*  _Nonnull (^)(id _Nonnull))shadowColor {
+    return ^ZLLayoutButton* (id color) {
+        if ([color isKindOfClass:UIColor.class]) {
+            UIColor *c = color;
+            self.layer.shadowColor = c.CGColor;
+        }else if ([color isKindOfClass:NSString.class]) {
+            self.layer.shadowColor = __UIColorFromHexString(color).CGColor;
+        }else {
+            self.layer.shadowColor = nil;
+        }
+        return self.shadowOffset(0,2);
+    };
+}
+
+
+- (ZLLayoutButton*  _Nonnull (^)(CGFloat, CGFloat))shadowOffset {
+    return ^ZLLayoutButton* (CGFloat width, CGFloat height) {
+        self.layer.shadowOffset = CGSizeMake(width, height);
+        return self.shadowRadius(6);
+    };
+}
+
+
+- (ZLLayoutButton*  _Nonnull (^)(CGFloat))shadowRadius {
+    return ^ZLLayoutButton* (CGFloat radius) {
+        self.layer.shadowRadius = radius;
+        return self.shadowOpacity(0.2);
+    };
+}
+
+- (ZLLayoutButton*  _Nonnull (^)(CGFloat))shadowOpacity {
+    return ^ZLLayoutButton* (CGFloat opacity) {
+        self.layer.shadowOpacity = opacity;
+        return self.masksToBounds(NO);
+    };
+}
+- (ZLLayoutButton*  _Nonnull (^)(BOOL))masksToBounds {
+    return ^ZLLayoutButton* (BOOL masks) {
+        self.layer.masksToBounds = masks;
+        return self;
+    };
+}
 @end

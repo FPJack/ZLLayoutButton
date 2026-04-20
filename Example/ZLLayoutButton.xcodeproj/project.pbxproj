@@ -37,12 +37,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0B02C0DE2C651B3E9B4947BF /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		0B02C0DE2C651B3E9B4947BF /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		139FA08CE399A11E7CB26B5F /* Pods-ZLLayoutButton_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ZLLayoutButton_Tests.release.xcconfig"; path = "Target Support Files/Pods-ZLLayoutButton_Tests/Pods-ZLLayoutButton_Tests.release.xcconfig"; sourceTree = "<group>"; };
-		1578E2F994E3DE9835DDF181 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		1578E2F994E3DE9835DDF181 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		40CBEEB15717D2317F98DDFB /* Pods-ZLLayoutButton_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ZLLayoutButton_Example.debug.xcconfig"; path = "Target Support Files/Pods-ZLLayoutButton_Example/Pods-ZLLayoutButton_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		50E13EE943D1078B5540F305 /* Pods_ZLLayoutButton_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ZLLayoutButton_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		5A328545F320FE6CE424E08F /* ZLLayoutButton.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = ZLLayoutButton.podspec; path = ../ZLLayoutButton.podspec; sourceTree = "<group>"; };
+		5A328545F320FE6CE424E08F /* ZLLayoutButton.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = ZLLayoutButton.podspec; path = ../ZLLayoutButton.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		6003F58A195388D20070C39A /* ZLLayoutButton_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZLLayoutButton_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58D195388D20070C39A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6003F58F195388D20070C39A /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -103,7 +103,6 @@
 				A900C410F4267D699C78288F /* Pods-ZLLayoutButton_Tests.debug.xcconfig */,
 				139FA08CE399A11E7CB26B5F /* Pods-ZLLayoutButton_Tests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -259,6 +258,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);

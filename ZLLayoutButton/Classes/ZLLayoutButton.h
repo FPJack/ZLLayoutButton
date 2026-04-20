@@ -74,7 +74,7 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 
 /// 内边距，默认 UIEdgeInsetsZero
 @property (nonatomic, assign) UIEdgeInsets layoutEdgeInsets;
-@property (nonatomic, copy,readonly) ZLLayoutButton* (^edgeInsets)(CGFloat top,CGFloat leading,CGFloat bottom,CGFloat trailing);// layoutEdgeInsets 的别名，便捷设置
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^insets)(CGFloat top,CGFloat leading,CGFloat bottom,CGFloat trailing);// layoutEdgeInsets 的别名，便捷设置
 
 /// 图片固定大小，默认 CGSizeZero 表示使用图片自身大小
 @property (nonatomic, assign) CGSize layoutImageSize;
@@ -83,11 +83,12 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 /// 便捷设置图片（设置 Normal 状态）
 @property (nonatomic, strong, nullable) UIImage *layoutImage;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^image)(id image);// layoutImage 的别名，便捷设置 UIImage 或 UIImageName
-
+///选中图片
+@property (nonatomic, copy, readonly)ZLLayoutButton* (^selectImage)(id image);// 便捷设置选中状态图片，支持 UIImage 或 UIImageName
 /// 便捷设置标题（设置 Normal 状态）
 @property (nonatomic, copy, nullable) NSString *layoutTitle;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^title)(NSString *title);// layoutTitle 的别名，便捷设置
-
+@property (nonatomic, copy, readonly)ZLLayoutButton* (^selectTitle)(NSString* title);
 /// 便捷设置字体
 @property (nonatomic, strong, nullable) UIFont *layoutTitleFont;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^titleSysFont)(CGFloat fontSize);// layoutTitleFont 的别名，便捷设置
@@ -98,6 +99,8 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 /// 便捷设置字体颜色（设置 Normal 状态）
 @property (nonatomic, strong, nullable) UIColor *layoutTitleColor;
 @property (nonatomic, copy,readonly) ZLLayoutButton* (^titleColor)(id color);// layoutTitleColor 的别名，便捷设置 UIColor 或 UIColorHex
+///设置背景色
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^bgColor)(id color);// 便捷设置背景色，支持 UIColor 或 UIColorHex
 
 /// 图片偏移量（在布局计算完成后额外偏移），正值向右/下，负值向左/上 ，纯视觉偏移，不影响 intrinsicContentSize
 @property (nonatomic, assign) UIOffset imageOffset;
@@ -107,6 +110,32 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 @property (nonatomic, assign) UIOffset titleOffset;
 @property (nonatomic, copy, readonly) ZLLayoutButton* (^txtOffset)(CGFloat horizontal, CGFloat vertical);
 
+/// 便捷设置点击事件，支持链式调用
+@property (nonatomic,copy)ZLLayoutButton* (^touchAction)(void (^action)(ZLLayoutButton * button));
+
+/// 设置图片模式
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^imageMode)(UIViewContentMode mode);
+///UIViewContentModeScaleAspectFit
+- (instancetype)imageModeScaleAspectFit;
+
+///设置userinteractionEnabled
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^userInteraction)(BOOL userInteraction);
+///设置选中
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^select)(BOOL select);
+///设置圆角
+@property (nonatomic, copy, readonly) ZLLayoutButton* (^cornerRadius)(CGFloat radius);
+
+///UIColor or #333333
+@property (nonatomic,readonly) ZLLayoutButton* (^borderColor)(id);
+@property (nonatomic,readonly) ZLLayoutButton* (^borderWidth)(CGFloat);
+@property (nonatomic,readonly) ZLLayoutButton* (^shadowColor)(id color);
+//默认 （0,2）
+@property (nonatomic,readonly) ZLLayoutButton* (^shadowOffset)(CGFloat width,CGFloat height);
+//默认0.2
+@property (nonatomic,readonly) ZLLayoutButton* (^shadowOpacity)(CGFloat opacity);
+//默认6
+@property (nonatomic,readonly) ZLLayoutButton* (^shadowRadius)(CGFloat radius);
+@property (nonatomic,readonly) ZLLayoutButton* (^masksToBounds)(BOOL masksToBounds);
 @end
 
 NS_ASSUME_NONNULL_END
