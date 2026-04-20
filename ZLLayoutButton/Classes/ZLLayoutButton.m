@@ -743,7 +743,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (void)dealloc
 {
     if (self.deallocBlock) {
-        self.deallocBlock();
+        self.deallocBlock(self);
     }
 }
 @end
