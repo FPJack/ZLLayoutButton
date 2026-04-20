@@ -1,0 +1,27 @@
+PODS:
+  - FBSnapshotTestCase (2.1.4):
+    - FBSnapshotTestCase/SwiftSupport (= 2.1.4)
+  - FBSnapshotTestCase/Core (2.1.4)
+  - FBSnapshotTestCase/SwiftSupport (2.1.4):
+    - FBSnapshotTestCase/Core
+  - ZLLayoutButton (0.1.0)
+
+DEPENDENCIES:
+  - FBSnapshotTestCase
+  - ZLLayoutButton (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - FBSnapshotTestCase
+
+EXTERNAL SOURCES:
+  ZLLayoutButton:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  FBSnapshotTestCase: 094f9f314decbabe373b87cc339bea235a63e07a
+  ZLLayoutButton: c928b72cbf668b074cc41705a2fba71a824e0273
+
+PODFILE CHECKSUM: 84287ba0fe379eafc17c86c7cc4f619de1e21789
+
+COCOAPODS: 1.16.2

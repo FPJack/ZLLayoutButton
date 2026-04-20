@@ -1,0 +1,22 @@
+{
+  "name": "ZLLayoutButton",
+  "version": "0.1.0",
+  "summary": "A short description of ZLLayoutButton.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/fanpeng/ZLLayoutButton",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "fanpeng": "peng.fan@ukelink.com"
+  },
+  "source": {
+    "git": "https://github.com/fanpeng/ZLLayoutButton.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "10.0"
+  },
+  "source_files": "ZLLayoutButton/Classes/**/*"
+}

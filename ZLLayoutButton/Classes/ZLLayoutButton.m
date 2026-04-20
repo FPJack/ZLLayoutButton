@@ -1,0 +1,323 @@
+//
+//  ZLLayoutButton.m
+//  ZLTagListView
+//
+//  Created by fanpeng on 2026/04/20.
+//
+
+#import "ZLLayoutButton.h"
+
+@interface ZLLayoutButton ()
+/// 缓存的内容尺寸，避免重复计算
+@property (nonatomic, assign) CGSize cachedImageSize;
+@property (nonatomic, assign) CGSize cachedTitleSize;
+@property (nonatomic, assign) BOOL needsRecalculate;
+@end
+
+@implementation ZLLayoutButton
+
+#pragma mark - Init
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) [self _zl_setupDefaults];
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) [self _zl_setupDefaults];
+    return self;
+}
+
+- (void)_zl_setupDefaults {
+    _layoutAxis = ZLLayoutButtonAxisHorizontal;
+    _layoutOrder = ZLLayoutButtonOrderImageFirst;
+    _layoutContentAlignment = ZLLayoutButtonContentAlignmentCenter;
+    _layoutSpacing = 4;
+    _flexibleSpacing = NO;
+    _layoutEdgeInsets = UIEdgeInsetsZero;
+    _layoutImageSize = CGSizeZero;
+    _needsRecalculate = YES;
+}
+
+#pragma mark - Convenience Setters
+
+- (void)setLayoutImage:(UIImage *)layoutImage {
+    [self setImage:layoutImage forState:UIControlStateNormal];
+    [self _zl_markDirty];
+}
+
+- (UIImage *)layoutImage {
+    return [self imageForState:UIControlStateNormal];
+}
+
+- (void)setLayoutTitle:(NSString *)layoutTitle {
+    [self setTitle:layoutTitle forState:UIControlStateNormal];
+    [self _zl_markDirty];
+}
+
+- (NSString *)layoutTitle {
+    return [self titleForState:UIControlStateNormal];
+}
+
+- (void)setLayoutTitleFont:(UIFont *)layoutTitleFont {
+    self.titleLabel.font = layoutTitleFont;
+    [self _zl_markDirty];
+}
+
+- (UIFont *)layoutTitleFont {
+    return self.titleLabel.font;
+}
+
+- (void)setLayoutTitleColor:(UIColor *)layoutTitleColor {
+    [self setTitleColor:layoutTitleColor forState:UIControlStateNormal];
+}
+
+- (UIColor *)layoutTitleColor {
+    return [self titleColorForState:UIControlStateNormal];
+}
+
+#pragma mark - Layout Property Setters
+
+- (void)setLayoutAxis:(ZLLayoutButtonAxis)layoutAxis {
+    if (_layoutAxis != layoutAxis) { _layoutAxis = layoutAxis; [self _zl_markDirty]; }
+}
+
+- (void)setLayoutOrder:(ZLLayoutButtonOrder)layoutOrder {
+    if (_layoutOrder != layoutOrder) { _layoutOrder = layoutOrder; [self _zl_markDirty]; }
+}
+
+- (void)setLayoutContentAlignment:(ZLLayoutButtonContentAlignment)layoutContentAlignment {
+    if (_layoutContentAlignment != layoutContentAlignment) { _layoutContentAlignment = layoutContentAlignment; [self setNeedsLayout]; }
+}
+
+- (void)setLayoutSpacing:(CGFloat)layoutSpacing {
+    if (_layoutSpacing != layoutSpacing) { _layoutSpacing = layoutSpacing; [self _zl_markDirty]; }
+}
+
+- (void)setFlexibleSpacing:(BOOL)flexibleSpacing {
+    if (_flexibleSpacing != flexibleSpacing) { _flexibleSpacing = flexibleSpacing; [self _zl_markDirty]; }
+}
+
+- (void)setLayoutEdgeInsets:(UIEdgeInsets)layoutEdgeInsets {
+    _layoutEdgeInsets = layoutEdgeInsets;
+    [self _zl_markDirty];
+}
+
+- (void)setLayoutImageSize:(CGSize)layoutImageSize {
+    _layoutImageSize = layoutImageSize;
+    [self _zl_markDirty];
+}
+
+- (void)_zl_markDirty {
+    _needsRecalculate = YES;
+    [self invalidateIntrinsicContentSize];
+    [self setNeedsLayout];
+}
+
+#pragma mark - Size Calculation (不访问 self.imageView / self.titleLabel 以避免递归)
+
+- (void)_zl_recalculateIfNeeded {
+    if (!_needsRecalculate) return;
+    _needsRecalculate = NO;
+
+    // 图片尺寸
+    UIImage *img = [self imageForState:self.state] ?: [self imageForState:UIControlStateNormal];
+    if (img) {
+        if (_layoutImageSize.width > 0 && _layoutImageSize.height > 0) {
+            _cachedImageSize = _layoutImageSize;
+        } else {
+            _cachedImageSize = img.size;
+        }
+    } else {
+        _cachedImageSize = CGSizeZero;
+    }
+
+    // 文字尺寸 — 用 NSString boundingRect 计算，不触发 titleLabel 布局
+    NSString *title = [self titleForState:self.state] ?: [self titleForState:UIControlStateNormal];
+    NSAttributedString *attrTitle = [self attributedTitleForState:self.state] ?: [self attributedTitleForState:UIControlStateNormal];
+
+    if (attrTitle.length > 0) {
+        CGRect r = [attrTitle boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)
+                                           options:NSStringDrawingUsesLineFragmentOrigin
+                                           context:nil];
+        _cachedTitleSize = CGSizeMake(ceil(r.size.width), ceil(r.size.height));
+    } else if (title.length > 0) {
+        UIFont *font = self.titleLabel.font ?: [UIFont systemFontOfSize:15];
+        NSDictionary *attrs = @{NSFontAttributeName: font};
+        CGRect r = [title boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)
+                                       options:NSStringDrawingUsesLineFragmentOrigin
+                                    attributes:attrs
+                                       context:nil];
+        _cachedTitleSize = CGSizeMake(ceil(r.size.width), ceil(r.size.height));
+    } else {
+        _cachedTitleSize = CGSizeZero;
+    }
+}
+
+- (BOOL)_zl_hasImage {
+    return _cachedImageSize.width > 0 && _cachedImageSize.height > 0;
+}
+
+- (BOOL)_zl_hasTitle {
+    return _cachedTitleSize.width > 0 && _cachedTitleSize.height > 0;
+}
+
+- (CGFloat)_zl_actualSpacing {
+    return ([self _zl_hasImage] && [self _zl_hasTitle]) ? _layoutSpacing : 0;
+}
+
+#pragma mark - Intrinsic Content Size
+
+- (CGSize)intrinsicContentSize {
+    [self _zl_recalculateIfNeeded];
+
+    CGSize imgSize = _cachedImageSize;
+    CGSize txtSize = _cachedTitleSize;
+    CGFloat sp = [self _zl_actualSpacing];
+    UIEdgeInsets insets = _layoutEdgeInsets;
+
+    CGFloat w, h;
+    if (_layoutAxis == ZLLayoutButtonAxisHorizontal) {
+        w = imgSize.width + sp + txtSize.width;
+        h = MAX(imgSize.height, txtSize.height);
+    } else {
+        w = MAX(imgSize.width, txtSize.width);
+        h = imgSize.height + sp + txtSize.height;
+    }
+
+    w += insets.left + insets.right;
+    h += insets.top + insets.bottom;
+
+    return CGSizeMake(ceil(w), ceil(h));
+}
+
+- (CGSize)sizeThatFits:(CGSize)size {
+    return [self intrinsicContentSize];
+}
+
+#pragma mark - layoutSubviews (唯一布局入口，避免死循环)
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    [self _zl_recalculateIfNeeded];
+
+    CGRect bounds = self.bounds;
+    UIEdgeInsets insets = _layoutEdgeInsets;
+    CGRect contentRect = CGRectMake(insets.left, insets.top,
+                                     MAX(0, bounds.size.width - insets.left - insets.right),
+                                     MAX(0, bounds.size.height - insets.top - insets.bottom));
+
+    CGSize imgSize = _cachedImageSize;
+    CGSize txtSize = _cachedTitleSize;
+    CGFloat sp = [self _zl_actualSpacing];
+
+    BOOL hasImg = [self _zl_hasImage];
+    BOOL hasTxt = [self _zl_hasTitle];
+
+    // 获取 UIButton 内部的 imageView 和 titleLabel
+    UIImageView *imgView = self.imageView;
+    UILabel *lblView = self.titleLabel;
+
+    if (!hasImg && !hasTxt) {
+        imgView.frame = CGRectZero;
+        lblView.frame = CGRectZero;
+        return;
+    }
+
+    // 只有一个元素
+    if (!hasImg) {
+        imgView.frame = CGRectZero;
+        lblView.frame = [self _zl_centeredRect:txtSize inRect:contentRect];
+        return;
+    }
+    if (!hasTxt) {
+        lblView.frame = CGRectZero;
+        imgView.frame = [self _zl_centeredRect:imgSize inRect:contentRect];
+        return;
+    }
+
+    // 两个元素都有 — 确定排列顺序
+    UIView *firstView, *secondView;
+    CGSize firstSize, secondSize;
+
+    if (_layoutOrder == ZLLayoutButtonOrderImageFirst) {
+        firstView = imgView;  firstSize = imgSize;
+        secondView = lblView; secondSize = txtSize;
+    } else {
+        firstView = lblView;  firstSize = txtSize;
+        secondView = imgView; secondSize = imgSize;
+    }
+
+    if (_layoutAxis == ZLLayoutButtonAxisHorizontal) {
+        [self _zl_layoutH_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
+    } else {
+        [self _zl_layoutV_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
+    }
+}
+
+#pragma mark - Horizontal Layout
+
+- (void)_zl_layoutH_first:(UIView *)first fs:(CGSize)fs second:(UIView *)second ss:(CGSize)ss sp:(CGFloat)sp rect:(CGRect)rect {
+    CGFloat totalW = fs.width + sp + ss.width;
+    CGFloat actualSp = sp;
+    CGFloat startX;
+
+    if (_flexibleSpacing) {
+        actualSp = MAX(sp, rect.size.width - fs.width - ss.width);
+        startX = rect.origin.x;
+    } else {
+        startX = rect.origin.x + (rect.size.width - totalW) / 2.0;
+    }
+
+    CGFloat firstY  = [self _zl_alignedOrigin:fs.height container:rect.size.height offset:rect.origin.y];
+    CGFloat secondY = [self _zl_alignedOrigin:ss.height container:rect.size.height offset:rect.origin.y];
+
+    first.frame  = CGRectMake(startX, firstY, fs.width, fs.height);
+    second.frame = CGRectMake(startX + fs.width + actualSp, secondY, ss.width, ss.height);
+}
+
+#pragma mark - Vertical Layout
+
+- (void)_zl_layoutV_first:(UIView *)first fs:(CGSize)fs second:(UIView *)second ss:(CGSize)ss sp:(CGFloat)sp rect:(CGRect)rect {
+    CGFloat totalH = fs.height + sp + ss.height;
+    CGFloat actualSp = sp;
+    CGFloat startY;
+
+    if (_flexibleSpacing) {
+        actualSp = MAX(sp, rect.size.height - fs.height - ss.height);
+        startY = rect.origin.y;
+    } else {
+        startY = rect.origin.y + (rect.size.height - totalH) / 2.0;
+    }
+
+    CGFloat firstX  = [self _zl_alignedOrigin:fs.width container:rect.size.width offset:rect.origin.x];
+    CGFloat secondX = [self _zl_alignedOrigin:ss.width container:rect.size.width offset:rect.origin.x];
+
+    first.frame  = CGRectMake(firstX, startY, fs.width, fs.height);
+    second.frame = CGRectMake(secondX, startY + fs.height + actualSp, ss.width, ss.height);
+}
+
+#pragma mark - Helpers
+
+- (CGFloat)_zl_alignedOrigin:(CGFloat)itemLen container:(CGFloat)containerLen offset:(CGFloat)offset {
+    switch (_layoutContentAlignment) {
+        case ZLLayoutButtonContentAlignmentStart:
+            return offset;
+        case ZLLayoutButtonContentAlignmentEnd:
+            return offset + containerLen - itemLen;
+        case ZLLayoutButtonContentAlignmentCenter:
+        default:
+            return offset + (containerLen - itemLen) / 2.0;
+    }
+}
+
+- (CGRect)_zl_centeredRect:(CGSize)size inRect:(CGRect)rect {
+    return CGRectMake(rect.origin.x + (rect.size.width - size.width) / 2.0,
+                      rect.origin.y + (rect.size.height - size.height) / 2.0,
+                      size.width, size.height);
+}
+
+@end
