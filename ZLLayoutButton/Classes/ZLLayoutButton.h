@@ -39,6 +39,11 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
  * - 完整支持 Auto Layout，intrinsicContentSize 自动撑开
  * - 支持 layoutEdgeInsets 设置内边距
  * - 支持固定图片大小 (layoutImageSize)
+ * - 完整支持 RTL（阿拉伯语等从右到左语言）：
+ *   · 水平布局自动镜像（图文顺序翻转）
+ *   · Start/End 对齐自动翻转
+ *   · layoutEdgeInsets 的 left/right 自动翻转
+ *   · imageOffset/titleOffset 的水平方向自动翻转
  *
  * 注意：使用 UIButton 原生的 setTitle:forState: / setImage:forState: 设置内容，
  *       或使用便捷属性 layoutImage / layoutTitle。
@@ -74,7 +79,7 @@ typedef NS_ENUM(NSUInteger, ZLLayoutButtonContentAlignment) {
 
 /// 内边距，默认 UIEdgeInsetsZero
 @property (nonatomic, assign) UIEdgeInsets layoutEdgeInsets;
-@property (nonatomic, copy,readonly) ZLLayoutButton* (^insets)(CGFloat top,CGFloat leading,CGFloat bottom,CGFloat trailing);// layoutEdgeInsets 的别名，便捷设置
+@property (nonatomic, copy,readonly) ZLLayoutButton* (^inset)(CGFloat top,CGFloat leading,CGFloat bottom,CGFloat trailing);// layoutEdgeInsets 的别名，便捷设置
 
 /// 图片固定大小，默认 CGSizeZero 表示使用图片自身大小
 @property (nonatomic, assign) CGSize layoutImageSize;

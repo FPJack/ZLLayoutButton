@@ -29,6 +29,42 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 @end
 
 @implementation ZLLayoutButton
+
+#pragma mark - RTL Support
+
+- (BOOL)_zl_isRTL {
+    if (@available(iOS 10.0, *)) {
+        return self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    }
+    return [UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+}
+
+/// RTL 下翻转水平值
+- (CGFloat)_zl_flipH:(CGFloat)value {
+    return [self _zl_isRTL] ? -value : value;
+}
+
+/// RTL 下翻转 Start/End 对齐
+- (ZLLayoutButtonContentAlignment)_zl_effectiveAlignment {
+    if (![self _zl_isRTL]) return _layoutContentAlignment;
+    switch (_layoutContentAlignment) {
+        case ZLLayoutButtonContentAlignmentStart: return ZLLayoutButtonContentAlignmentEnd;
+        case ZLLayoutButtonContentAlignmentEnd:   return ZLLayoutButtonContentAlignmentStart;
+        default: return _layoutContentAlignment;
+    }
+}
+
+/// RTL 下翻转 UIEdgeInsets 的 left/right
+- (UIEdgeInsets)_zl_effectiveInsets {
+    UIEdgeInsets insets = _layoutEdgeInsets;
+    if ([self _zl_isRTL]) {
+        CGFloat tmp = insets.left;
+        insets.left = insets.right;
+        insets.right = tmp;
+    }
+    return insets;
+}
+
 - (void)addSubview:(UIView *)view {
     [super addSubview: view];
     [self saveView:view];
@@ -423,7 +459,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     [self _zl_doRecalculate];
 
     CGRect bounds = self.bounds;
-    UIEdgeInsets insets = _layoutEdgeInsets;
+    UIEdgeInsets insets = [self _zl_effectiveInsets];
     CGRect contentRect = CGRectMake(insets.left, insets.top,
                                      MAX(0, bounds.size.width - insets.left - insets.right),
                                      MAX(0, bounds.size.height - insets.top - insets.bottom));
@@ -434,6 +470,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
     BOOL hasImg = [self _zl_hasImage];
     BOOL hasTxt = [self _zl_hasTitle];
+    BOOL isRTL = [self _zl_isRTL];
 
     UIImageView *imgView = self.imgView;
     UILabel *lblView = self.lab;
@@ -446,29 +483,20 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
     if (!hasImg) {
         imgView.frame = CGRectZero;
-       // imgView.hidden = YES;
         CGRect f = [self _zl_centeredRect:txtSize inRect:contentRect];
-        f.origin.x += _titleOffset.horizontal;
+        f.origin.x += [self _zl_flipH:_titleOffset.horizontal];
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
-        [self adjustTitleOffset:_titleOffset];
-        //lblView.hidden = NO;
         return;
     }
     if (!hasTxt) {
         lblView.frame = CGRectZero;
-        //lblView.hidden = YES;
         CGRect f = [self _zl_centeredRect:imgSize inRect:contentRect];
-        f.origin.x += _imageOffset.horizontal;
+        f.origin.x += [self _zl_flipH:_imageOffset.horizontal];
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
-        [self adjustImageOffset:_imageOffset];
-        //imgView.hidden = NO;
         return;
     }
-
-    //imgView.hidden = NO;
-   // lblView.hidden = NO;
 
     // 两个元素都有
     UIView *firstView, *secondView;
@@ -483,34 +511,33 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     }
 
     if (_layoutAxis == ZLLayoutButtonAxisHorizontal) {
-        [self _zl_layoutH_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
+        if (isRTL) {
+            // RTL: 翻转顺序，first 在右，second 在左
+            [self _zl_layoutH_first:secondView fs:secondSize second:firstView ss:firstSize sp:sp rect:contentRect];
+        } else {
+            [self _zl_layoutH_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
+        }
     } else {
         [self _zl_layoutV_first:firstView fs:firstSize second:secondView ss:secondSize sp:sp rect:contentRect];
     }
 
-    // 应用偏移量（纯视觉偏移，不影响 intrinsicContentSize）
-    [self adjustImageOffset:_imageOffset];
-    [self adjustTitleOffset:_titleOffset];
-}
-- (void)adjustImageOffset:(UIOffset)imgOffset  {
+    // 应用偏移量（RTL 下翻转水平偏移）
     if (_imageOffset.horizontal != 0 || _imageOffset.vertical != 0) {
-        UIImageView *imgView = self.imgView;
         CGRect f = imgView.frame;
-        f.origin.x += _imageOffset.horizontal;
+        f.origin.x += [self _zl_flipH:_imageOffset.horizontal];
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
     }
-}
-- (void)adjustTitleOffset:(UIOffset)titleOffset {
-    UILabel *lblView = self.lab;
     if (_titleOffset.horizontal != 0 || _titleOffset.vertical != 0) {
-        UIImageView *imgView = self.imgView;
         CGRect f = lblView.frame;
-        f.origin.x += _titleOffset.horizontal;
+        f.origin.x += [self _zl_flipH:_titleOffset.horizontal];
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
     }
 }
+
+// Remove the old adjustImageOffset / adjustTitleOffset methods — inlined above
+
 #pragma mark - Horizontal Layout
 
 - (void)_zl_layoutH_first:(UIView *)first fs:(CGSize)fs second:(UIView *)second ss:(CGSize)ss sp:(CGFloat)sp rect:(CGRect)rect {
@@ -556,7 +583,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 #pragma mark - Helpers
 
 - (CGFloat)_zl_alignedOrigin:(CGFloat)itemLen container:(CGFloat)containerLen offset:(CGFloat)offset {
-    switch (_layoutContentAlignment) {
+    ZLLayoutButtonContentAlignment alignment = [self _zl_effectiveAlignment];
+    switch (alignment) {
         case ZLLayoutButtonContentAlignmentStart:
             return offset;
         case ZLLayoutButtonContentAlignmentEnd:
@@ -587,7 +615,6 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (ZLLayoutButton * _Nonnull (^)(BOOL))userInteraction {
     return ^(BOOL enabled) {
         self.userInteractionEnabled = enabled;
-        
         return self;
     };
 }
