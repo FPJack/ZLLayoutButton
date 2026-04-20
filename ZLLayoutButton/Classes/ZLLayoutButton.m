@@ -413,10 +413,9 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
         maxWidth = self.titleLabel.preferredMaxLayoutWidth;
     } else if (self.titleLabel.numberOfLines == 1) {
         maxWidth = CGFLOAT_MAX;
+    }else if(self.titleLabel.numberOfLines > 1) {
+        maxWidth = self.bounds.size.width - _layoutEdgeInsets.left - _layoutEdgeInsets.right;
     }
-//    else {
-//        maxWidth = self.bounds.size.width - _layoutEdgeInsets.left - _layoutEdgeInsets.right;
-//    }
     if (attrTitle.length > 0) {
         CGRect r = [attrTitle boundingRectWithSize:CGSizeMake(maxWidth, CGFLOAT_MAX)
                                            options:NSStringDrawingUsesLineFragmentOrigin
