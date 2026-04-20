@@ -23,10 +23,35 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 @property (nonatomic, assign) CGSize cachedImageSize;
 @property (nonatomic, assign) CGSize cachedTitleSize;
 @property (nonatomic, assign) BOOL needsRecalculate;
+@property (nonatomic,weak)UILabel *lab;
+@property (nonatomic,weak)UIImageView *imgView;
 @end
 
 @implementation ZLLayoutButton
-
+- (void)addSubview:(UIView *)view {
+    [super addSubview: view];
+    [self saveView:view];
+}
+- (void)insertSubview:(UIView *)view atIndex:(NSInteger)index {
+    [super insertSubview:view atIndex:index];
+    [self saveView:view];
+}
+- (void)insertSubview:(UIView *)view aboveSubview:(UIView *)siblingSubview {
+    [super insertSubview:view aboveSubview:siblingSubview];
+    [self saveView:view];
+}
+- (void)insertSubview:(UIView *)view belowSubview:(UIView *)siblingSubview {
+    [super insertSubview:view belowSubview:siblingSubview];
+    [self saveView:view];
+}
+- (void)saveView:(UIView *)view {
+    if ([self.titleLabel isEqual:view]) {
+        self.lab = (UILabel*)view;
+    }
+    if ([self.imageView isEqual:view]) {
+        self.imgView = (UIImageView *)view;
+    }
+}
 #pragma mark - Init
 + (instancetype)verticalLayout {
     return [self buttonWithType:UIButtonTypeCustom].verticalLayout;
@@ -71,6 +96,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
             self.layoutImage = img;
         } else if ([img isKindOfClass:NSString.class]) {
             self.layoutImage = [UIImage imageNamed:img];
+        }else {
+            self.layoutImage = nil;
         }
         return self;
     };
@@ -223,6 +250,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
 - (void)setImageOffset:(UIOffset)imageOffset {
     _imageOffset = imageOffset;
+    [self invalidateIntrinsicContentSize];
     [self setNeedsLayout];
 }
 
@@ -235,6 +263,7 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
 - (void)setTitleOffset:(UIOffset)titleOffset {
     _titleOffset = titleOffset;
+    [self invalidateIntrinsicContentSize];
     [self setNeedsLayout];
 }
 
@@ -255,6 +284,10 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
 - (void)_zl_recalculateIfNeeded {
     if (!_needsRecalculate) return;
+    [self _zl_doRecalculate];
+}
+
+- (void)_zl_doRecalculate {
     _needsRecalculate = NO;
 
     UIImage *img = [self imageForState:self.state] ?: [self imageForState:UIControlStateNormal];
@@ -304,7 +337,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 #pragma mark - Intrinsic Content Size
 
 - (CGSize)intrinsicContentSize {
-    [self _zl_recalculateIfNeeded];
+    // 始终重新计算，避免标记被提前消费导致数据过期
+    [self _zl_doRecalculate];
 
     CGSize imgSize = _cachedImageSize;
     CGSize txtSize = _cachedTitleSize;
@@ -335,7 +369,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    [self _zl_recalculateIfNeeded];
+    // 始终重新计算，确保动态修改内容后布局正确
+    [self _zl_doRecalculate];
 
     CGRect bounds = self.bounds;
     UIEdgeInsets insets = _layoutEdgeInsets;
@@ -350,8 +385,8 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     BOOL hasImg = [self _zl_hasImage];
     BOOL hasTxt = [self _zl_hasTitle];
 
-    UIImageView *imgView = self.imageView;
-    UILabel *lblView = self.titleLabel;
+    UIImageView *imgView = self.imgView;
+    UILabel *lblView = self.lab;
 
     if (!hasImg && !hasTxt) {
         imgView.frame = CGRectZero;
@@ -361,20 +396,27 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
     if (!hasImg) {
         imgView.frame = CGRectZero;
+        imgView.hidden = YES;
         CGRect f = [self _zl_centeredRect:txtSize inRect:contentRect];
         f.origin.x += _titleOffset.horizontal;
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
+        lblView.hidden = NO;
         return;
     }
     if (!hasTxt) {
         lblView.frame = CGRectZero;
+        lblView.hidden = YES;
         CGRect f = [self _zl_centeredRect:imgSize inRect:contentRect];
         f.origin.x += _imageOffset.horizontal;
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
+        imgView.hidden = NO;
         return;
     }
+
+    imgView.hidden = NO;
+    lblView.hidden = NO;
 
     // 两个元素都有
     UIView *firstView, *secondView;

@@ -11,6 +11,7 @@
 
 @interface ZLViewController () <UIScrollViewDelegate>
 @property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) UIStackView *stackView;
 @end
 
 @implementation ZLViewController
@@ -20,18 +21,34 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
     
-    // 使用 ScrollView 承载所有 demo
-    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
-    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    // ScrollView
+    self.scrollView = [[UIScrollView alloc] init];
+    self.scrollView.translatesAutoresizingMaskIntoConstraints = NO;
     self.scrollView.alwaysBounceVertical = YES;
     [self.view addSubview:self.scrollView];
+    [NSLayoutConstraint activateConstraints:@[
+        [self.scrollView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.scrollView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.scrollView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.scrollView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+    ]];
     
-    CGFloat y = 60;
-    CGFloat centerX = CGRectGetMidX(self.view.bounds);
-    CGFloat fullW = self.view.bounds.size.width;
+    // StackView 作为 scrollView 内容容器
+    self.stackView = [[UIStackView alloc] init];
+    self.stackView.axis = UILayoutConstraintAxisVertical;
+    self.stackView.alignment = UIStackViewAlignmentCenter;
+    self.stackView.spacing = 20;
+    self.stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.scrollView addSubview:self.stackView];
+    [NSLayoutConstraint activateConstraints:@[
+        [self.stackView.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor constant:20],
+        [self.stackView.bottomAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.bottomAnchor constant:-20],
+        [self.stackView.leadingAnchor constraintEqualToAnchor:self.scrollView.frameLayoutGuide.leadingAnchor],
+        [self.stackView.trailingAnchor constraintEqualToAnchor:self.scrollView.frameLayoutGuide.trailingAnchor],
+    ]];
     
     // ========== 第一组：基本排列方式 ==========
-    y = [self addSectionTitle:@"基本排列方式" atY:y];
+    [self addSectionTitle:@"基本排列方式"];
     
     // 1. 水平 - 图片在左，文字在右（默认）
     {
@@ -39,11 +56,7 @@
         btn.layoutAxis = ZLLayoutButtonAxisHorizontal;
         btn.layoutOrder = ZLLayoutButtonOrderImageFirst;
         btn.layoutSpacing = 8;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"水平 · 图片在左" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"水平 · 图片在左"];
     }
     
     // 1.5 图片偏移 + 文字偏移
@@ -51,14 +64,10 @@
         ZLLayoutButton *btn = [self makeButtonWithTitle:@"图片下移+文字右移" color:[UIColor systemTealColor]];
         btn.layoutAxis = ZLLayoutButtonAxisHorizontal;
         btn.layoutSpacing = 8;
-        btn.imageOffset = UIOffsetMake(0, 4);   // 图片向下偏移4pt
-        btn.titleOffset = UIOffsetMake(6, 0);   // 文字向右偏移6pt
+        btn.imageOffset = UIOffsetMake(0, 24);
+        btn.titleOffset = UIOffsetMake(6, 0);
         btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"imageOffset=(0,4) titleOffset=(6,0)" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"imageOffset=(0,24) titleOffset=(6,0)"];
     }
     
     // 1.6 垂直排列 + 偏移（链式写法）
@@ -66,14 +75,10 @@
         ZLLayoutButton *btn = [self makeButtonWithTitle:@"偏移示例" color:[UIColor systemPinkColor]];
         btn.layoutAxis = ZLLayoutButtonAxisVertical;
         btn.layoutSpacing = 6;
-        btn.imgOffset(-3, 0);  // 图片向左偏移3pt
-        btn.txtOffset(0, 2);   // 文字向下偏移2pt
+        btn.imgOffset(-3, 0);
+        btn.txtOffset(0, 2);
         btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"垂直 · imgOffset(-3,0) txtOffset(0,2)" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"垂直 · imgOffset(-3,0) txtOffset(0,2)"];
     }
     
     // 2. 水平 - 文字在左，图片在右
@@ -82,11 +87,7 @@
         btn.layoutAxis = ZLLayoutButtonAxisHorizontal;
         btn.layoutOrder = ZLLayoutButtonOrderTitleFirst;
         btn.layoutSpacing = 8;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"水平 · 文字在左" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"水平 · 文字在左"];
     }
     
     // 3. 垂直 - 图片在上，文字在下
@@ -95,11 +96,7 @@
         btn.layoutAxis = ZLLayoutButtonAxisVertical;
         btn.layoutOrder = ZLLayoutButtonOrderImageFirst;
         btn.layoutSpacing = 6;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"垂直 · 图片在上" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"垂直 · 图片在上"];
     }
     
     // 4. 垂直 - 文字在上，图片在下
@@ -108,15 +105,11 @@
         btn.layoutAxis = ZLLayoutButtonAxisVertical;
         btn.layoutOrder = ZLLayoutButtonOrderTitleFirst;
         btn.layoutSpacing = 6;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"垂直 · 文字在上" atY:y - 18];
-        y += btn.bounds.size.height + 55;
+        [self addButton:btn label:@"垂直 · 文字在上"];
     }
     
     // ========== 第二组：内边距 & 固定图片大小 ==========
-    y = [self addSectionTitle:@"内边距 & 固定图片大小" atY:y];
+    [self addSectionTitle:@"内边距 & 固定图片大小"];
     
     // 5. 固定图片大小 + 圆角 + 内边距
     {
@@ -126,11 +119,7 @@
         btn.layoutEdgeInsets = UIEdgeInsetsMake(10, 20, 10, 20);
         btn.layer.cornerRadius = 20;
         btn.clipsToBounds = YES;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"固定图片18×18 + 圆角胶囊" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"固定图片18×18 + 圆角胶囊"];
     }
     
     // 6. 大内边距 + 大间距
@@ -142,15 +131,11 @@
         btn.backgroundColor = [UIColor systemIndigoColor];
         btn.layoutTitleColor = [UIColor whiteColor];
         btn.layoutImage = [self iconImageWithColor:[UIColor whiteColor]];
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"大内边距 + 深色背景" atY:y - 18];
-        y += btn.bounds.size.height + 55;
+        [self addButton:btn label:@"大内边距 + 深色背景"];
     }
     
     // ========== 第三组：弹性间距 ==========
-    y = [self addSectionTitle:@"弹性间距" atY:y];
+    [self addSectionTitle:@"弹性间距"];
     
     // 7. 弹性间距 - 水平
     {
@@ -158,11 +143,8 @@
         btn.flexibleSpacing = YES;
         btn.layoutSpacing = 8;
         btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
-        btn.frame = CGRectMake(30, y, fullW - 60, 48);
         btn.layer.cornerRadius = 10;
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"弹性间距 · 水平撑满" atY:y - 18];
-        y += 48 + 45;
+        [self addFullWidthButton:btn label:@"弹性间距 · 水平撑满" height:48];
     }
     
     // 8. 弹性间距 - 文字在左，图片在右（类似列表 cell 箭头）
@@ -178,14 +160,11 @@
         btn.layoutEdgeInsets = UIEdgeInsetsMake(14, 16, 14, 16);
         btn.backgroundColor = [UIColor colorWithRed:0.96 green:0.96 blue:0.97 alpha:1.0];
         btn.layer.cornerRadius = 10;
-        btn.frame = CGRectMake(30, y, fullW - 60, 50);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"弹性间距 · 模拟列表箭头" atY:y - 18];
-        y += 50 + 55;
+        [self addFullWidthButton:btn label:@"弹性间距 · 模拟列表箭头" height:50];
     }
     
     // ========== 第四组：交叉轴对齐 ==========
-    y = [self addSectionTitle:@"交叉轴对齐" atY:y];
+    [self addSectionTitle:@"交叉轴对齐"];
     
     NSArray *alignNames = @[@"居中", @"顶部对齐", @"底部对齐"];
     NSArray *alignValues = @[@(ZLLayoutButtonContentAlignmentCenter),
@@ -204,18 +183,17 @@
         btn.layoutEdgeInsets = UIEdgeInsetsMake(8, 12, 8, 12);
         btn.backgroundColor = [UIColor colorWithRed:0.94 green:0.94 blue:0.96 alpha:1.0];
         btn.layer.cornerRadius = 6;
-        // 给一个较高的 frame 来展示对齐效果
-        btn.frame = CGRectMake(0, y, 140, 60);
-        btn.center = CGPointMake(centerX, btn.center.y);
-        [self.scrollView addSubview:btn];
-        [self addLabel:alignNames[i] atY:y - 18];
-        y += 60 + 40;
+        btn.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.stackView addArrangedSubview:btn];
+        // 固定高度展示对齐效果
+        [NSLayoutConstraint activateConstraints:@[
+            [btn.widthAnchor constraintEqualToConstant:140],
+            [btn.heightAnchor constraintEqualToConstant:60],
+        ]];
     }
     
-    y += 10;
-    
     // ========== 第五组：纯文字 / 纯图片 ==========
-    y = [self addSectionTitle:@"纯文字 / 纯图片" atY:y];
+    [self addSectionTitle:@"纯文字 / 纯图片"];
     
     // 9. 纯文字
     {
@@ -227,11 +205,7 @@
         btn.backgroundColor = [UIColor systemBlueColor];
         btn.layer.cornerRadius = 22;
         btn.clipsToBounds = YES;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"纯文字" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"纯文字"];
     }
     
     // 10. 纯图片
@@ -243,20 +217,21 @@
         btn.backgroundColor = [UIColor colorWithRed:1.0 green:0.9 blue:0.9 alpha:1.0];
         btn.layer.cornerRadius = 28;
         btn.clipsToBounds = YES;
-        [btn sizeToFit];
-        btn.center = CGPointMake(centerX, y + btn.bounds.size.height / 2.0);
-        [self.scrollView addSubview:btn];
-        [self addLabel:@"纯图片" atY:y - 18];
-        y += btn.bounds.size.height + 45;
+        [self addButton:btn label:@"纯图片"];
     }
     
     // ========== 第六组：横排多个 Tab 样式 ==========
-    y = [self addSectionTitle:@"Tab 样式" atY:y];
+    [self addSectionTitle:@"Tab 样式"];
     {
+        UIStackView *tabStack = [[UIStackView alloc] init];
+        tabStack.axis = UILayoutConstraintAxisHorizontal;
+        tabStack.distribution = UIStackViewDistributionFillEqually;
+        tabStack.alignment = UIStackViewAlignmentFill;
+        tabStack.translatesAutoresizingMaskIntoConstraints = NO;
+        
         NSArray *tabTitles = @[@"首页", @"发现", @"消息", @"我的"];
         NSArray *tabColors = @[[UIColor systemBlueColor], [UIColor systemGreenColor],
                                [UIColor systemOrangeColor], [UIColor systemPurpleColor]];
-        CGFloat tabW = (fullW - 60) / tabTitles.count;
         for (NSInteger i = 0; i < tabTitles.count; i++) {
             ZLLayoutButton *btn = [[ZLLayoutButton alloc] init];
             btn.layoutAxis = ZLLayoutButtonAxisVertical;
@@ -267,14 +242,72 @@
             btn.layoutTitle = tabTitles[i];
             btn.layoutTitleFont = [UIFont systemFontOfSize:11];
             btn.layoutTitleColor = [UIColor darkGrayColor];
-            btn.frame = CGRectMake(30 + tabW * i, y, tabW, 56);
-            [self.scrollView addSubview:btn];
+            btn.translatesAutoresizingMaskIntoConstraints = NO;
+            [tabStack addArrangedSubview:btn];
         }
-        [self addLabel:@"垂直排列模拟 TabBar" atY:y - 18];
-        y += 56 + 50;
+        
+        [self.stackView addArrangedSubview:tabStack];
+        [NSLayoutConstraint activateConstraints:@[
+            [tabStack.leadingAnchor constraintEqualToAnchor:self.stackView.leadingAnchor constant:30],
+            [tabStack.trailingAnchor constraintEqualToAnchor:self.stackView.trailingAnchor constant:-30],
+            [tabStack.heightAnchor constraintEqualToConstant:56],
+        ]];
     }
+}
+
+#pragma mark - Helpers
+
+- (void)addSectionTitle:(NSString *)title {
+    UILabel *label = [[UILabel alloc] init];
+    label.text = title;
+    label.font = [UIFont boldSystemFontOfSize:18];
+    label.textColor = [UIColor blackColor];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
     
-    self.scrollView.contentSize = CGSizeMake(fullW, y + 40);
+    // 包一层 view 让 label 左对齐
+    UIView *container = [[UIView alloc] init];
+    container.translatesAutoresizingMaskIntoConstraints = NO;
+    [container addSubview:label];
+    [NSLayoutConstraint activateConstraints:@[
+        [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:30],
+        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:10],
+        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor],
+    ]];
+    [self.stackView addArrangedSubview:container];
+    [container.leadingAnchor constraintEqualToAnchor:self.stackView.leadingAnchor].active = YES;
+    [container.trailingAnchor constraintEqualToAnchor:self.stackView.trailingAnchor].active = YES;
+}
+
+- (void)addButton:(ZLLayoutButton *)btn label:(NSString *)text {
+    btn.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    // 描述 label
+    UILabel *lbl = [[UILabel alloc] init];
+    lbl.text = text;
+    lbl.font = [UIFont systemFontOfSize:12];
+    lbl.textColor = [UIColor grayColor];
+    lbl.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    [self.stackView addArrangedSubview:lbl];
+    [self.stackView addArrangedSubview:btn];
+}
+
+- (void)addFullWidthButton:(ZLLayoutButton *)btn label:(NSString *)text height:(CGFloat)h {
+    btn.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    UILabel *lbl = [[UILabel alloc] init];
+    lbl.text = text;
+    lbl.font = [UIFont systemFontOfSize:12];
+    lbl.textColor = [UIColor grayColor];
+    lbl.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    [self.stackView addArrangedSubview:lbl];
+    [self.stackView addArrangedSubview:btn];
+    [NSLayoutConstraint activateConstraints:@[
+        [btn.leadingAnchor constraintEqualToAnchor:self.stackView.leadingAnchor constant:30],
+        [btn.trailingAnchor constraintEqualToAnchor:self.stackView.trailingAnchor constant:-30],
+        [btn.heightAnchor constraintEqualToConstant:h],
+    ]];
 }
 
 #pragma mark - Factory
@@ -292,7 +325,6 @@
 
 #pragma mark - Image Generators
 
-/// 纯色圆角方块图标
 - (UIImage *)iconImageWithColor:(UIColor *)color {
     CGSize size = CGSizeMake(28, 28);
     UIGraphicsBeginImageContextWithOptions(size, NO, 0);
@@ -303,7 +335,6 @@
     return image;
 }
 
-/// 右箭头图标（用于模拟列表箭头）
 - (UIImage *)arrowImageWithColor:(UIColor *)color {
     CGSize size = CGSizeMake(12, 20);
     UIGraphicsBeginImageContextWithOptions(size, NO, 0);
@@ -319,29 +350,6 @@
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
-}
-
-#pragma mark - Helpers
-
-- (CGFloat)addSectionTitle:(NSString *)title atY:(CGFloat)y {
-    UILabel *label = [[UILabel alloc] init];
-    label.text = title;
-    label.font = [UIFont boldSystemFontOfSize:18];
-    label.textColor = [UIColor blackColor];
-    [label sizeToFit];
-    label.frame = CGRectMake(30, y, label.bounds.size.width, label.bounds.size.height);
-    [self.scrollView addSubview:label];
-    return y + label.bounds.size.height + 30;
-}
-
-- (void)addLabel:(NSString *)text atY:(CGFloat)y {
-    UILabel *label = [[UILabel alloc] init];
-    label.text = text;
-    label.font = [UIFont systemFontOfSize:12];
-    label.textColor = [UIColor grayColor];
-    [label sizeToFit];
-    label.center = CGPointMake(CGRectGetMidX(self.view.bounds), y + label.bounds.size.height / 2.0);
-    [self.scrollView addSubview:label];
 }
 
 - (void)didReceiveMemoryWarning
