@@ -40,6 +40,8 @@
     self.stackView.spacing = 20;
     self.stackView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.scrollView addSubview:self.stackView];
+    
+    
     [NSLayoutConstraint activateConstraints:@[
         [self.stackView.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor constant:20],
         [self.stackView.bottomAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.bottomAnchor constant:-20],
@@ -57,6 +59,9 @@
         btn.layoutOrder = ZLLayoutButtonOrderImageFirst;
         btn.layoutSpacing = 8;
         [self addButton:btn label:@"水平 · 图片在左"];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [btn setTitle:@"addButtonaddButtonaddButton" forState:UIControlStateNormal];
+        });
     }
     
     // 1.5 图片偏移 + 文字偏移
@@ -64,10 +69,10 @@
         ZLLayoutButton *btn = [self makeButtonWithTitle:@"图片下移+文字右移" color:[UIColor systemTealColor]];
         btn.layoutAxis = ZLLayoutButtonAxisHorizontal;
         btn.layoutSpacing = 8;
-        btn.imageOffset = UIOffsetMake(0, 24);
+        btn.imageOffset = UIOffsetMake(0, 10);
         btn.titleOffset = UIOffsetMake(6, 0);
         btn.layoutEdgeInsets = UIEdgeInsetsMake(12, 16, 12, 16);
-        [self addButton:btn label:@"imageOffset=(0,24) titleOffset=(6,0)"];
+        [self addButton:btn label:@"imageOffset=(10) titleOffset=(6,0)"];
     }
     
     // 1.6 垂直排列 + 偏移（链式写法）

@@ -396,27 +396,29 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
 
     if (!hasImg) {
         imgView.frame = CGRectZero;
-        imgView.hidden = YES;
+       // imgView.hidden = YES;
         CGRect f = [self _zl_centeredRect:txtSize inRect:contentRect];
         f.origin.x += _titleOffset.horizontal;
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
-        lblView.hidden = NO;
+        [self adjustTitleOffset:_titleOffset];
+        //lblView.hidden = NO;
         return;
     }
     if (!hasTxt) {
         lblView.frame = CGRectZero;
-        lblView.hidden = YES;
+        //lblView.hidden = YES;
         CGRect f = [self _zl_centeredRect:imgSize inRect:contentRect];
         f.origin.x += _imageOffset.horizontal;
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
-        imgView.hidden = NO;
+        [self adjustImageOffset:_imageOffset];
+        //imgView.hidden = NO;
         return;
     }
 
-    imgView.hidden = NO;
-    lblView.hidden = NO;
+    //imgView.hidden = NO;
+   // lblView.hidden = NO;
 
     // 两个元素都有
     UIView *firstView, *secondView;
@@ -437,20 +439,28 @@ static inline UIColor *__UIColorFromHexString(NSString *hexStr) {
     }
 
     // 应用偏移量（纯视觉偏移，不影响 intrinsicContentSize）
+    [self adjustImageOffset:_imageOffset];
+    [self adjustTitleOffset:_titleOffset];
+}
+- (void)adjustImageOffset:(UIOffset)imgOffset  {
     if (_imageOffset.horizontal != 0 || _imageOffset.vertical != 0) {
+        UIImageView *imgView = self.imgView;
         CGRect f = imgView.frame;
         f.origin.x += _imageOffset.horizontal;
         f.origin.y += _imageOffset.vertical;
         imgView.frame = f;
     }
+}
+- (void)adjustTitleOffset:(UIOffset)titleOffset {
+    UILabel *lblView = self.lab;
     if (_titleOffset.horizontal != 0 || _titleOffset.vertical != 0) {
+        UIImageView *imgView = self.imgView;
         CGRect f = lblView.frame;
         f.origin.x += _titleOffset.horizontal;
         f.origin.y += _titleOffset.vertical;
         lblView.frame = f;
     }
 }
-
 #pragma mark - Horizontal Layout
 
 - (void)_zl_layoutH_first:(UIView *)first fs:(CGSize)fs second:(UIView *)second ss:(CGSize)ss sp:(CGFloat)sp rect:(CGRect)rect {
